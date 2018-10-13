@@ -115,6 +115,13 @@ function setupPlayerAnimations(anims) {
     })
 }
 
+function handleCollide(cat, bullet) {
+    bullet.setActive(false);
+    bullet.setVisible(false);
+    cat.setActive(false);
+    cat.setVisible(false);
+}
+
 function create() {
     var map      = this.make.tilemap({ key: 'map' });
     var floor    = map.addTilesetImage('Floor', 'tilemap-floors');
@@ -133,7 +140,7 @@ function create() {
     });
     */
 
-    bullets = this.add.group({
+    bullets = this.physics.add.group({
         classType: (s) => new Projectile({scene: s, key: 'projectile', boundingBox: {gameWidth, gameHeight}}),
         maxSize: 10,
         runChildUpdate: true
@@ -154,6 +161,7 @@ function create() {
     this.physics.add.collider(player, misc);
     this.physics.add.collider(player, boxLayer);
     this.physics.add.collider(misc, boxLayer);
+    this.physics.add.overlap(bullets, misc, handleCollide, null, this);
 
     this.cameras.main.setBounds(0, 0, gameWidth, gameHeight);
     this.cameras.main.startFollow(player, true, 1, 1);
