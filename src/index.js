@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
+import Projectile from './projectile';
 import floors from './assets/DawnLike/Objects/Floor.png';
 import warrior from './assets/DawnLike/Commissions/Warrior.png';
+import ammo from './assets/DawnLike/Items/Ammo.png';
 import mapjson from './assets/map.json';
 
-var config = {
+const config = {
     type: Phaser.AUTO,
     width: 1600,
     height: 600,
@@ -21,7 +23,7 @@ var config = {
     },
 };
 
-var game = new Phaser.Game(config);
+const game = new Phaser.Game(config);
 
 function preload() {
     this.load.image('tilemap-floors', floors);
@@ -30,11 +32,18 @@ function preload() {
         frameWidth: 16,
         frameHeight: 16,
     });
+    this.load.spritesheet('projectile', ammo, {
+        frameWidth: 16,
+        frameHeight: 16,
+    });
 }
 
-var player;
-var cursors;
-var gameOver = false;
+let player;
+let cursors;
+let bullets;
+let fireButton;
+let lastFired = 0;
+let gameOver = false;
 
 function setupPlayer(player) {
     player.setBounce(0.1);
@@ -42,6 +51,7 @@ function setupPlayer(player) {
 
     player.data = {
         isFalling: false,
+        facing: 'up'
     };
 }
 
@@ -82,10 +92,11 @@ function setupPlayerAnimations(anims) {
 }
 
 function create() {
-    var map      = this.make.tilemap({ key: 'map' });
-    var tileset  = map.addTilesetImage('Floor', 'tilemap-floors');
-    var mapLayer = map.createStaticLayer("World", tileset, 0, 0);
-    var boxLayer = map.createDynamicLayer("Above World", tileset, 0, 0);
+    const map      = this.make.tilemap({ key: 'map' });
+    const tileset  = map.addTilesetImage('Floor', 'tilemap-floors');
+    const mapLayer = map.createStaticLayer("World", tileset, 0, 0);
+    const boxLayer = map.createDynamicLayer("Above World", tileset, 0, 0);
+    fireButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     boxLayer.setCollisionByProperty({ collides: true });
 
     /* Debug
@@ -97,6 +108,11 @@ function create() {
     });
     */
 
+    bullets = this.add.group({
+        classType: (s) => new Projectile({scene: s, key: 'projectile', x: 0, y: 96}),
+        maxSize: 10,
+        runChildUpdate: true
+    });
     cursors = this.input.keyboard.createCursorKeys();
     player  = this.physics.add.sprite(100, 450, 'dude');
 
@@ -114,6 +130,17 @@ function update(time, delta) {
     const speed = 175;
     const prevVelocity = player.body.velocity.clone();
     player.body.setVelocity(0);
+
+    if (cursors.left.isDown) {
+        player.data.facing = 'left';
+    } else if (cursors.right.isDown) {
+        player.data.facing = 'right';
+    } else if (cursors.up.isDown) {
+        player.data.facing = 'up';
+    } else if (cursors.down.isDown) {
+        player.data.facing = 'down';
+    }
+
     if (cursors.left.isDown) {
         player.body.setVelocityX(-speed);
     } else if (cursors.right.isDown) {
@@ -138,5 +165,15 @@ function update(time, delta) {
         player.anims.play('down', true);
     } else {
         player.anims.stop();
+    }
+
+
+
+    if (fireButton.isDown && time > lastFired) {
+        var bullet = bullets.get();
+        if (bullet) {
+            bullet.fire(player.x, player.y, player.data.facing);
+            lastFired = time + 100;
+        }
     }
 }
