@@ -3,17 +3,22 @@ import floors from './assets/DawnLike/Objects/Floor.png';
 import warrior from './assets/DawnLike/Commissions/Warrior.png';
 import mapjson from './assets/map.json';
 
+var gameWidth = 1600;
+var gameHeight = 768;
+var viewPortWidth = gameWidth / 2;
+var viewPortHeight = gameHeight;
+
 var config = {
     type: Phaser.AUTO,
-    width: 1600,
-    height: 600,
+    width: viewPortWidth,
+    height: viewPortHeight,
     physics: {
         default: 'arcade',
         arcade: {
             gravity: { y: 0 },
             debug: false,
         },
-},
+    },
     scene: {
         preload: preload,
         create: create,
@@ -98,6 +103,9 @@ function create() {
     */
 
     cursors = this.input.keyboard.createCursorKeys();
+
+    this.physics.world.setBounds(0, 0, gameWidth, gameHeight, true, true, true, true);
+
     player  = this.physics.add.sprite(100, 450, 'dude');
 
     setupPlayer(player);
@@ -105,7 +113,7 @@ function create() {
 
     this.physics.add.collider(player, boxLayer);
 
-    this.cameras.main.setBounds(0, 0, 800 * 2, 768 * 2);
+    this.cameras.main.setBounds(0, 0, gameWidth, gameHeight);
     this.cameras.main.startFollow(player, true, 1, 1);
     this.cameras.main.zoom = 2;
 }
