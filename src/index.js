@@ -1,13 +1,11 @@
 import Phaser from 'phaser';
-import sky from './assets/sky.png';
-import platform from './assets/platform.png';
 import floors from './assets/DawnLike/Objects/Floor.png';
 import warrior from './assets/DawnLike/Commissions/Warrior.png';
 import mapjson from './assets/map.json';
 
 var config = {
     type: Phaser.AUTO,
-    width: 800,
+    width: 1600,
     height: 600,
     physics: {
         default: 'arcade',
@@ -26,8 +24,6 @@ var config = {
 var game = new Phaser.Game(config);
 
 function preload() {
-    this.load.image('sky', sky);
-    this.load.image('ground', platform);
     this.load.image('tilemap-floors', floors);
     this.load.tilemapTiledJSON('map', mapjson);
     this.load.spritesheet('dude', warrior, {
@@ -36,25 +32,9 @@ function preload() {
     });
 }
 
-var platforms;
 var player;
 var cursors;
-var stars;
-var score = 0;
-var scoreText;
-var bombs;
 var gameOver = false;
-
-function setupPlatforms(platforms) {
-    platforms
-        .create(400, 588, 'ground')
-        .setScale(2, 1)
-        .refreshBody();
-
-    platforms.create(600, 400, 'ground');
-    platforms.create(50, 250, 'ground');
-    platforms.create(750, 220, 'ground');
-}
 
 function setupPlayer(player) {
     player.setBounce(0.1);
@@ -117,12 +97,8 @@ function create() {
     });
     */
 
-    cursors   = this.input.keyboard.createCursorKeys();
-    scoreText = this.add.text(16, 16, 'Score: 0', {
-        fontSize: '16px',
-        fill: '#fff',
-    });
-    player = this.physics.add.sprite(100, 450, 'dude');
+    cursors = this.input.keyboard.createCursorKeys();
+    player  = this.physics.add.sprite(100, 450, 'dude');
 
     setupPlayer(player);
     setupPlayerAnimations(this.anims);
