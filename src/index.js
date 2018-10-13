@@ -134,7 +134,7 @@ function create() {
     */
 
     bullets = this.add.group({
-        classType: (s) => new Projectile({scene: s, key: 'projectile', x: 0, y: 96, boundingBox: {viewPortWidth, viewPortHeight}}),
+        classType: (s) => new Projectile({scene: s, key: 'projectile', boundingBox: {gameWidth, gameHeight}}),
         maxSize: 10,
         runChildUpdate: true
     });

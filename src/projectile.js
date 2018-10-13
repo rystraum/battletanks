@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 
 export default class Projectile extends Phaser.GameObjects.Image {
     constructor(config) {
-        super(config.scene, config.x, config.y, config.key, 42 );
+        super(config.scene, 0, 0, config.key, 42 );
         this.boundingBox = config.boundingBox;
     }
 
@@ -53,8 +53,8 @@ export default class Projectile extends Phaser.GameObjects.Image {
 
         if (this.x < 0
             || this.y < 0
-            || this.x > this.boundingBox.viewPortWidth
-            || this.y > this.boundingBox.viewPortHeight
+            || this.x > this.boundingBox.gameWidth
+            || this.y > this.boundingBox.gameHeight
         ) {
             this.setActive(false);
             this.setVisible(false);
