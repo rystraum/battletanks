@@ -57,7 +57,9 @@ let fireButton;
 let lastFired = 0;
 let misc;
 let gameOver = false;
-const fireRate = 500;
+let numberOfBullets = 20;
+let bulletText;
+const fireRate = 200;
 
 function setupPlayer(player) {
     player.setBounce(0.1);
@@ -128,6 +130,11 @@ function create() {
     var walls    = map.addTilesetImage('Wall', 'tilemap-walls');
     var mapLayer = map.createStaticLayer("World", floor, 0, 0);
     var boxLayer = map.createDynamicLayer("Above World", walls, 0, 0);
+    bulletText = this.add.text(214, 560)
+        .setOrigin(0,1)
+        .setText(`bullets: ${numberOfBullets}`)
+        .setStyle({ fontSize: '12px', fill: '#000' })
+        .setScrollFactor(0);
     fireButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     boxLayer.setCollisionByProperty({ collides: true });
 
@@ -142,7 +149,7 @@ function create() {
 
     bullets = this.physics.add.group({
         classType: (s) => new Projectile({scene: s, key: 'projectile', boundingBox: {gameWidth, gameHeight}}),
-        maxSize: 10,
+        maxSize: numberOfBullets,
         runChildUpdate: true
     });
     cursors = this.input.keyboard.createCursorKeys();
@@ -220,4 +227,6 @@ function update(time, delta) {
             lastFired = time + fireRate;
         }
     }
+
+    bulletText.setText(`bullets: ${bullets.getTotalFree()}`)
 }
