@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import floors from './assets/DawnLike/Objects/Floor.png';
+import walls from './assets/DawnLike/Objects/Wall.png';
 import warrior from './assets/DawnLike/Commissions/Warrior.png';
+import misc0 from './assets/DawnLike/Characters/Misc0.png';
+import misc1 from './assets/DawnLike/Characters/Misc1.png';
 import mapjson from './assets/map.json';
 
 var gameWidth = 1600;
@@ -30,15 +33,20 @@ var game = new Phaser.Game(config);
 
 function preload() {
     this.load.image('tilemap-floors', floors);
+    this.load.image('tilemap-walls', walls);
     this.load.tilemapTiledJSON('map', mapjson);
     this.load.spritesheet('dude', warrior, {
         frameWidth: 16,
         frameHeight: 16,
     });
+
+    this.load.spritesheet('misc0', misc0, { frameWidth: 16, frameHeight: 16 });
+    this.load.spritesheet('misc1', misc1, { frameWidth: 16, frameHeight: 16 });
 }
 
 var player;
 var cursors;
+var misc;
 var gameOver = false;
 
 function setupPlayer(player) {
@@ -84,13 +92,24 @@ function setupPlayerAnimations(anims) {
         frameRate: 10,
         repeat: -1,
     });
+
+    anims.create({
+        key: 'misc',
+        frames: [
+            { key: 'misc0', frame: 0 },
+            { key: 'misc1', frame: 0 },
+        ],
+        frameRate: 5,
+        repeat: -1
+    })
 }
 
 function create() {
     var map      = this.make.tilemap({ key: 'map' });
-    var tileset  = map.addTilesetImage('Floor', 'tilemap-floors');
-    var mapLayer = map.createStaticLayer("World", tileset, 0, 0);
-    var boxLayer = map.createDynamicLayer("Above World", tileset, 0, 0);
+    var floor    = map.addTilesetImage('Floor', 'tilemap-floors');
+    var walls    = map.addTilesetImage('Wall', 'tilemap-walls');
+    var mapLayer = map.createStaticLayer("World", floor, 0, 0);
+    var boxLayer = map.createDynamicLayer("Above World", walls, 0, 0);
     boxLayer.setCollisionByProperty({ collides: true });
 
     /* Debug
@@ -106,12 +125,18 @@ function create() {
 
     this.physics.world.setBounds(0, 0, gameWidth, gameHeight, true, true, true, true);
 
-    player  = this.physics.add.sprite(100, 450, 'dude');
+    player = this.physics.add.sprite(100, 450, 'dude');
+    misc = this.physics.add.sprite(80, 450, 'misc0');
+    misc.sprite = 0;
+
+    misc.setCollideWorldBounds(true);
 
     setupPlayer(player);
     setupPlayerAnimations(this.anims);
 
+    this.physics.add.collider(player, misc);
     this.physics.add.collider(player, boxLayer);
+    this.physics.add.collider(misc, boxLayer);
 
     this.cameras.main.setBounds(0, 0, gameWidth, gameHeight);
     this.cameras.main.startFollow(player, true, 1, 1);
@@ -121,6 +146,8 @@ function create() {
 function update(time, delta) {
     const speed = 175;
     const prevVelocity = player.body.velocity.clone();
+    misc.anims.play('misc', true);
+
     player.body.setVelocity(0);
     if (cursors.left.isDown) {
         player.body.setVelocityX(-speed);
