@@ -120,8 +120,7 @@ function setupPlayerAnimations(anims) {
 function handleCollide(cat, bullet) {
     bullet.setActive(false);
     bullet.setVisible(false);
-    cat.setActive(false);
-    cat.setVisible(false);
+    cat.disableBody(true, true);
 }
 
 function create() {
@@ -168,7 +167,7 @@ function create() {
     this.physics.add.collider(player, misc);
     this.physics.add.collider(player, boxLayer);
     this.physics.add.collider(misc, boxLayer);
-    this.physics.add.overlap(bullets, misc, handleCollide, null, this);
+    this.physics.add.overlap(misc, bullets, handleCollide, null, this);
 
     this.cameras.main.setBounds(0, 0, gameWidth, gameHeight);
     this.cameras.main.startFollow(player, true, 1, 1);
