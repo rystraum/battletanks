@@ -1,21 +1,29 @@
 import Phaser from 'phaser';
 import Projectile from './projectile';
 import floors from './assets/DawnLike/Objects/Floor.png';
+import walls from './assets/DawnLike/Objects/Wall.png';
 import warrior from './assets/DawnLike/Commissions/Warrior.png';
 import ammo from './assets/DawnLike/Items/Ammo.png';
+import misc0 from './assets/DawnLike/Characters/Misc0.png';
+import misc1 from './assets/DawnLike/Characters/Misc1.png';
 import mapjson from './assets/map.json';
 
-const config = {
+var gameWidth = 1600;
+var gameHeight = 768;
+var viewPortWidth = gameWidth / 2;
+var viewPortHeight = gameHeight;
+
+var config = {
     type: Phaser.AUTO,
-    width: 1600,
-    height: 600,
+    width: viewPortWidth,
+    height: viewPortHeight,
     physics: {
         default: 'arcade',
         arcade: {
             gravity: { y: 0 },
             debug: false,
         },
-},
+    },
     scene: {
         preload: preload,
         create: create,
@@ -27,6 +35,7 @@ const game = new Phaser.Game(config);
 
 function preload() {
     this.load.image('tilemap-floors', floors);
+    this.load.image('tilemap-walls', walls);
     this.load.tilemapTiledJSON('map', mapjson);
     this.load.spritesheet('dude', warrior, {
         frameWidth: 16,
@@ -36,6 +45,9 @@ function preload() {
         frameWidth: 16,
         frameHeight: 16,
     });
+
+    this.load.spritesheet('misc0', misc0, { frameWidth: 16, frameHeight: 16 });
+    this.load.spritesheet('misc1', misc1, { frameWidth: 16, frameHeight: 16 });
 }
 
 let player;
@@ -43,7 +55,9 @@ let cursors;
 let bullets;
 let fireButton;
 let lastFired = 0;
+let misc;
 let gameOver = false;
+const fireRate = 500;
 
 function setupPlayer(player) {
     player.setBounce(0.1);
@@ -89,13 +103,24 @@ function setupPlayerAnimations(anims) {
         frameRate: 10,
         repeat: -1,
     });
+
+    anims.create({
+        key: 'misc',
+        frames: [
+            { key: 'misc0', frame: 0 },
+            { key: 'misc1', frame: 0 },
+        ],
+        frameRate: 5,
+        repeat: -1
+    })
 }
 
 function create() {
-    const map      = this.make.tilemap({ key: 'map' });
-    const tileset  = map.addTilesetImage('Floor', 'tilemap-floors');
-    const mapLayer = map.createStaticLayer("World", tileset, 0, 0);
-    const boxLayer = map.createDynamicLayer("Above World", tileset, 0, 0);
+    var map      = this.make.tilemap({ key: 'map' });
+    var floor    = map.addTilesetImage('Floor', 'tilemap-floors');
+    var walls    = map.addTilesetImage('Wall', 'tilemap-walls');
+    var mapLayer = map.createStaticLayer("World", floor, 0, 0);
+    var boxLayer = map.createDynamicLayer("Above World", walls, 0, 0);
     fireButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     boxLayer.setCollisionByProperty({ collides: true });
 
@@ -109,19 +134,28 @@ function create() {
     */
 
     bullets = this.add.group({
-        classType: (s) => new Projectile({scene: s, key: 'projectile', x: 0, y: 96}),
+        classType: (s) => new Projectile({scene: s, key: 'projectile', x: 0, y: 96, boundingBox: {viewPortWidth, viewPortHeight}}),
         maxSize: 10,
         runChildUpdate: true
     });
     cursors = this.input.keyboard.createCursorKeys();
-    player  = this.physics.add.sprite(100, 450, 'dude');
+
+    this.physics.world.setBounds(0, 0, gameWidth, gameHeight, true, true, true, true);
+
+    player = this.physics.add.sprite(100, 450, 'dude');
+    misc = this.physics.add.sprite(80, 450, 'misc0');
+    misc.sprite = 0;
+
+    misc.setCollideWorldBounds(true);
 
     setupPlayer(player);
     setupPlayerAnimations(this.anims);
 
+    this.physics.add.collider(player, misc);
     this.physics.add.collider(player, boxLayer);
+    this.physics.add.collider(misc, boxLayer);
 
-    this.cameras.main.setBounds(0, 0, 800 * 2, 768 * 2);
+    this.cameras.main.setBounds(0, 0, gameWidth, gameHeight);
     this.cameras.main.startFollow(player, true, 1, 1);
     this.cameras.main.zoom = 2;
 }
@@ -129,6 +163,8 @@ function create() {
 function update(time, delta) {
     const speed = 175;
     const prevVelocity = player.body.velocity.clone();
+    misc.anims.play('misc', true);
+
     player.body.setVelocity(0);
 
     if (cursors.left.isDown) {
@@ -173,7 +209,7 @@ function update(time, delta) {
         var bullet = bullets.get();
         if (bullet) {
             bullet.fire(player.x, player.y, player.data.facing);
-            lastFired = time + 100;
+            lastFired = time + fireRate;
         }
     }
 }

@@ -3,8 +3,10 @@ import Phaser from 'phaser';
 export default class Projectile extends Phaser.GameObjects.Image {
     constructor(config) {
         super(config.scene, config.x, config.y, config.key, 42 );
+        this.boundingBox = config.boundingBox;
     }
 
+    boundingBox = null;
     speed = Phaser.Math.GetSpeed(400, 1);
 
     facing = 'up';
@@ -49,7 +51,11 @@ export default class Projectile extends Phaser.GameObjects.Image {
                 break;
         }
 
-        if ((this.y || this.x) < -16) {
+        if (this.x < 0
+            || this.y < 0
+            || this.x > this.boundingBox.viewPortWidth
+            || this.y > this.boundingBox.viewPortHeight
+        ) {
             this.setActive(false);
             this.setVisible(false);
         }
