@@ -106,7 +106,16 @@ function create() {
     var tileset  = map.addTilesetImage('Floor', 'tilemap-floors');
     var mapLayer = map.createStaticLayer("World", tileset, 0, 0);
     var boxLayer = map.createDynamicLayer("Above World", tileset, 0, 0);
+    boxLayer.setCollisionByProperty({ collides: true });
 
+    /* Debug
+    const debugGraphics = this.add.graphics().setAlpha(0.75);
+    boxLayer.renderDebug(debugGraphics, {
+      tileColor: null, // Color of non-colliding tiles
+      collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255), // Color of colliding tiles
+      faceColor: new Phaser.Display.Color(40, 39, 37, 255) // Color of colliding face edges
+    });
+    */
 
     cursors   = this.input.keyboard.createCursorKeys();
     scoreText = this.add.text(16, 16, 'Score: 0', {
@@ -117,6 +126,8 @@ function create() {
 
     setupPlayer(player);
     setupPlayerAnimations(this.anims);
+
+    this.physics.add.collider(player, boxLayer);
 
     this.cameras.main.setBounds(0, 0, 800 * 2, 768 * 2);
     this.cameras.main.startFollow(player, true, 1, 1);
