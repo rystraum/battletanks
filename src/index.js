@@ -1,10 +1,9 @@
 import Phaser from 'phaser';
 import sky from './assets/sky.png';
 import platform from './assets/platform.png';
-import star from './assets/star.png';
-import bomb from './assets/bomb.png';
 import floors from './assets/DawnLike/Objects/Floor.png';
 import warrior from './assets/DawnLike/Commissions/Warrior.png';
+import mapjson from './assets/map.json';
 
 var config = {
     type: Phaser.AUTO,
@@ -29,9 +28,8 @@ var game = new Phaser.Game(config);
 function preload() {
     this.load.image('sky', sky);
     this.load.image('ground', platform);
-    this.load.image('star', star);
-    this.load.image('bomb', bomb);
     this.load.image('tilemap-floors', floors);
+    this.load.tilemapTiledJSON('map', mapjson);
     this.load.spritesheet('dude', warrior, {
         frameWidth: 16,
         frameHeight: 16,
@@ -103,25 +101,19 @@ function setupPlayerAnimations(anims) {
     });
 }
 
-function setupStars(stars) {
-    stars.children.iterate(function(child) {
-        child.setBounceY(Phaser.Math.FloatBetween(0, 0.4));
-    });
-}
-
 function create() {
-        var map      = this.make.tilemap({ key: 'map' });
-        var tileset  = map.addTilesetImage('Floor', 'tilemap-floors');
-        var mapLayer = map.createStaticLayer("World", tileset, 0, 0);
-        var boxLayer = map.createDynamicLayer("Above World", tileset, 0, 0);
+    var map      = this.make.tilemap({ key: 'map' });
+    var tileset  = map.addTilesetImage('Floor', 'tilemap-floors');
+    var mapLayer = map.createStaticLayer("World", tileset, 0, 0);
+    var boxLayer = map.createDynamicLayer("Above World", tileset, 0, 0);
 
 
+    cursors   = this.input.keyboard.createCursorKeys();
     scoreText = this.add.text(16, 16, 'Score: 0', {
         fontSize: '16px',
         fill: '#fff',
     });
     player = this.physics.add.sprite(100, 450, 'dude');
-
 
     setupPlayer(player);
     setupPlayerAnimations(this.anims);
