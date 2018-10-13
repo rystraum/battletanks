@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import Projectile from './projectile';
+import Wall from './wall';
 import floors from './assets/DawnLike/Objects/Floor.png';
 import walls from './assets/DawnLike/Objects/Wall.png';
 import warrior from './assets/DawnLike/Commissions/Warrior.png';
@@ -37,6 +38,10 @@ function preload() {
     this.load.image('tilemap-floors', floors);
     this.load.image('tilemap-walls', walls);
     this.load.tilemapTiledJSON('map', mapjson);
+    this.load.spritesheet('walls', walls, {
+        frameWidth: 16,
+        frameHeight: 16,
+    });
     this.load.spritesheet('dude', warrior, {
         frameWidth: 16,
         frameHeight: 16,
@@ -67,7 +72,7 @@ function setupPlayer(player) {
 
     player.data = {
         isFalling: false,
-        facing: 'up'
+        facing: 'right'
     };
 }
 
@@ -128,23 +133,27 @@ function create() {
     var floor    = map.addTilesetImage('Floor', 'tilemap-floors');
     var walls    = map.addTilesetImage('Wall', 'tilemap-walls');
     var mapLayer = map.createStaticLayer("World", floor, 0, 0);
-    var boxLayer = map.createDynamicLayer("Above World", walls, 0, 0);
-    bulletText = this.add.text(214, 560)
-        .setOrigin(0,1)
-        .setText(`bullets: ${numberOfBullets}`)
-        .setStyle({ fontSize: '12px', fill: '#000' })
-        .setScrollFactor(0);
+    // var boxLayer = map.createDynamicLayer("Above World", walls, 0, 0);
     fireButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    boxLayer.setCollisionByProperty({ collides: true });
+    // boxLayer.setCollisionByProperty({ collides: true });
 
-    /* Debug
-    const debugGraphics = this.add.graphics().setAlpha(0.75);
-    boxLayer.renderDebug(debugGraphics, {
-      tileColor: null, // Color of non-colliding tiles
-      collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255), // Color of colliding tiles
-      faceColor: new Phaser.Display.Color(40, 39, 37, 255) // Color of colliding face edges
+    let aboveWorldLayerData = map.layers.find(t => t.name === "Above World");
+    let aboveWorldTiles = aboveWorldLayerData.data.reduce((acc, s) => acc.concat(s), []).filter(i => i.index > 0);
+
+    let wallSprites = aboveWorldTiles.map(tile => {
+        let sprite = this.physics.add.sprite(tile.pixelX, tile.pixelY, 'walls', tile.index - walls.firstgid, 0);
+        sprite.setOrigin(0);
+        sprite.setImmovable(true);
+        return sprite;
     });
-    */
+
+    // /* Debug
+    const debugGraphics = this.add.graphics().setAlpha(0.75);
+    // boxLayer.renderDebug(debugGraphics, {
+    //   tileColor: null, // Color of non-colliding tiles
+    //   collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255), // Color of colliding tiles
+    //   faceColor: new Phaser.Display.Color(40, 39, 37, 255) // Color of colliding face edges
+    // });
 
     bullets = this.physics.add.group({
         classType: (s) => new Projectile({scene: s, key: 'projectile', boundingBox: {gameWidth, gameHeight}}),
@@ -155,28 +164,40 @@ function create() {
 
     this.physics.world.setBounds(0, 0, gameWidth, gameHeight, true, true, true, true);
 
-    player = this.physics.add.sprite(100, 450, 'dude');
-    misc = this.physics.add.sprite(80, 450, 'misc0');
-    misc.sprite = 0;
-
+    player = this.physics.add.sprite(96, 480, 'dude');
+    misc = this.physics.add.sprite(80, 480, 'misc0');
     misc.setCollideWorldBounds(true);
 
     setupPlayer(player);
     setupPlayerAnimations(this.anims);
 
     this.physics.add.collider(player, misc);
-    this.physics.add.collider(player, boxLayer);
-    this.physics.add.collider(misc, boxLayer);
+    this.physics.add.collider(player, wallSprites);
+    // this.physics.add.collider(player, boxLayer);
+    // this.physics.add.collider(misc, boxLayer);
     this.physics.add.overlap(misc, bullets, handleCollide, null, this);
+    this.physics.add.overlap(wallSprites, bullets, (w, b) => {
+        b.setActive(false);
+        b.setVisible(false);
+        w.setActive(false);
+        w.setVisible(false);
+        w.disableBody(true, true);
+    }, null, this);
 
     this.cameras.main.setBounds(0, 0, gameWidth, gameHeight);
     this.cameras.main.startFollow(player, true, 1, 1);
     this.cameras.main.zoom = 2;
+
+    bulletText = this.add.text(214, 560)
+        .setOrigin(0,1)
+        .setText(`bullets: ${numberOfBullets}`)
+        .setStyle({ fontSize: '12px', fill: '#000' })
+        .setScrollFactor(0);
+
 }
 
 function update(time, delta) {
-    const speed = 175;
-    const prevVelocity = player.body.velocity.clone();
+    const speed = 100;
     misc.anims.play('misc', true);
 
     player.body.setVelocity(0);

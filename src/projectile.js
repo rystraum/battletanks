@@ -3,6 +3,8 @@ import Phaser from 'phaser';
 export default class Projectile extends Phaser.GameObjects.Image {
     constructor(config) {
         super(config.scene, 0, 0, config.key, 42 );
+        this.setSize(8, 8);
+        this.setScale(0.5);
         this.boundingBox = config.boundingBox;
     }
 
